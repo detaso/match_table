@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Adds a `match_table` matcher for your Capybara system specs."
   spec.description = "Capybara's built-in table matchers leave a lot to be desired. `match_table` is a matcher that allows you to match tables in your system specs with a lot more flexibility and much improved failure messages."
-  spec.homepage = "TODO: Put your gem's website or public repo URL here."
+  spec.homepage = "https://github.com/detaso/match_table"
   spec.required_ruby_version = ">= 3.1.0"
 
   spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
