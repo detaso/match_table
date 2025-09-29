@@ -108,7 +108,12 @@ RSpec::Matchers.define :match_table do |table|
     table = find_table(@table)
 
     @actual_headers =
-      table.find("thead").all("th").map(&:text)
+      table.find("thead").all("th").map(&:text).compact_blank
+
+    @actual_headers +=
+      table.find("thead").all("th", visible: :hidden).map do |element|
+    element.first("[data-role]").text(:all)
+      end.compact_blank
 
     @actual_rows = []
 
