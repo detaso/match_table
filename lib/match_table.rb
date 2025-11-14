@@ -77,10 +77,6 @@ RSpec::Matchers.define :match_table do |table|
     @expected_rows = rows
   end
 
-  chain :with_hidden_headers do
-    @include_hidden_headers = true
-  end
-
   failure_message do |page|
     if !@found_table
       "unable to find table \"#{table}\" on page"
@@ -112,14 +108,14 @@ RSpec::Matchers.define :match_table do |table|
     table = find_table(@table)
 
     @actual_headers =
-      table.find("thead").all("th").map(&:text).compact_blank
+      table.find("thead").all("th", visible: :all).map do |element|
+        text = element.text
+        if text.blank?
+          text = element.first("[data-role]", visible: :all, minimum: 0)&.text(:all) || ""
+        end
 
-    if @include_hidden_headers
-      @actual_headers +=
-        table.find("thead").all("th", visible: :hidden).map do |element|
-          element.first("[data-role]").text(:all)
-        end.compact_blank
-    end
+        text
+      end
 
     @actual_rows = []
 
