@@ -24,10 +24,10 @@ RSpec::Matchers.define :match_table do |table|
 
     raise ArgumentError, "all rows must have the same headers" unless same_headers
 
-    begin
-      # We'll rerun this block until our expectations are met or we time out.
-      synchronize do
-        @failures = []
+    # We'll rerun this block until our expectations are met or we time out.
+    synchronize do
+      @failures = []
+      begin
         find_elements_on_page
 
         header_positions =
@@ -42,27 +42,30 @@ RSpec::Matchers.define :match_table do |table|
         @actual_rows.each do |actual_row|
           matched_rows << match_row(header_positions:, actual_row:)
         end
-
-        @actual = matched_rows
-        @expected_as_array = Array(@expected_rows)
-
-        # Grab the failures from these expectations so we can use their failure messages
-        RSpec::Support.with_failure_notifier(append_to_failures_array_notifier) do
-          case @mode
-          when :exact
-            expect(actual).to eq(expected_as_array)
-          when :include
-            expect(actual).to include(*expected_as_array)
-          end
-        end
-
-        raise Capybara::ExpectationNotMet unless @failures.empty?
+      rescue Capybara::ExpectationNotMet => e
+        raise "Internal match_table error: #{e.message}"
       end
-    rescue Capybara::ExpectationNotMet
-      false
+
+      @actual = matched_rows
+      @expected_as_array = Array(@expected_rows)
+
+      # Grab the failures from these expectations so we can use their failure messages
+      RSpec::Support.with_failure_notifier(append_to_failures_array_notifier) do
+        case @mode
+        when :exact
+          expect(actual).to eq(expected_as_array)
+        when :include
+          expect(actual).to include(*expected_as_array)
+        end
+      end
+
+      # raise to signal to synchronize that we need to retry
+      raise Capybara::ExpectationNotMet unless @failures.empty?
     end
 
     @failures.empty?
+  rescue Capybara::ExpectationNotMet
+    false
   end
 
   # Match the table exactly with the provided rows in order.
@@ -108,12 +111,14 @@ RSpec::Matchers.define :match_table do |table|
     table = find_table(@table)
 
     @actual_headers =
-      table.find("thead").all("th").map(&:text).compact_blank
+      table.find("thead").all("th", visible: :all).map do |element|
+        text = element.text
+        if text.blank?
+          text = element.first("[data-role]", visible: :all, minimum: 0)&.text(:all) || ""
+        end
 
-    @actual_headers +=
-      table.find("thead").all("th", visible: :hidden).map do |element|
-    element.first("[data-role]").text(:all)
-      end.compact_blank
+        text
+      end
 
     @actual_rows = []
 
