@@ -32,7 +32,7 @@ RSpec::Matchers.define :match_table do |table|
 
         header_positions =
           expected_headers.each_with_object({}) do |header, hash|
-            position = @actual_headers.find_index { |actual_header| actual_header.start_with?(header) }
+            position = @actual_headers.find_index { |actual_header| actual_header == header }
             unless position.nil?
               hash[header] = position
             end
