@@ -32,7 +32,7 @@ RSpec::Matchers.define :match_table do |table|
 
         header_positions =
           expected_headers.each_with_object({}) do |header, hash|
-            position = @actual_headers.find_index { |actual_header| actual_header.start_with?(header) }
+            position = @actual_headers.find_index { |actual_header| actual_header == header }
             unless position.nil?
               hash[header] = position
             end
@@ -113,7 +113,7 @@ RSpec::Matchers.define :match_table do |table|
     @actual_headers =
       table.find("thead").all("th", visible: :all).map do |element|
         text = element.text
-        if text.blank?
+        if text.nil? || text.empty?
           text = element.first("[data-role]", visible: :all, minimum: 0)&.text(:all) || ""
         end
 
