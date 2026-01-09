@@ -123,7 +123,7 @@ RSpec::Matchers.define :match_table do |table|
     @actual_rows = []
 
     tbody = table.find("tbody:not(.contents)")
-    rows = tbody.all("tr[data-table-target='row']")
+    rows = tbody.all("tr")
 
     # Filter out rows that are inside accordion content tables
     rows = rows.reject do |row|

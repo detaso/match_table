@@ -25,12 +25,12 @@ RSpec.describe "match_table matcher" do
             </tr>
           </thead>
           <tbody>
-            <tr data-table-target="row">
+            <tr>
               <td>John Doe</td>
               <td>john@example.com</td>
               <td>Active</td>
             </tr>
-            <tr data-table-target="row">
+            <tr>
               <td>Jane Smith</td>
               <td>jane@example.com</td>
               <td>Inactive</td>
@@ -92,7 +92,7 @@ RSpec.describe "match_table matcher" do
             </tr>
           </thead>
           <tbody>
-            <tr data-table-target="row">
+            <tr>
               <td>Widget</td>
               <td>$10.00</td>
             </tr>
@@ -132,12 +132,12 @@ RSpec.describe "match_table matcher" do
             </tr>
           </thead>
           <tbody>
-            <tr data-table-target="row">
+            <tr>
               <td>001</td>
               <td>Alice</td>
               <td>$50.00</td>
             </tr>
-            <tr data-table-target="row">
+            <tr>
               <td>002</td>
               <td>Bob</td>
               <td>$75.00</td>
