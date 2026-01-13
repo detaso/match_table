@@ -160,4 +160,182 @@ RSpec.describe "match_table matcher" do
       )
     end
   end
+
+  context "with sortable headers (arrow icons)" do
+    let(:html) do
+      <<-HTML
+        <table id="sortable">
+          <thead>
+            <tr>
+              <th>Name arrow_drop_down</th>
+              <th>Age   arrow_drop_up  </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-table-target="row">
+              <td>Charlie</td>
+              <td>30</td>
+            </tr>
+          </tbody>
+        </table>
+      HTML
+    end
+
+    it "normalizes headers by removing arrow icons and extra spaces" do
+      expect(page).to match_table(:sortable).with_rows(
+        {"Name" => "Charlie", "Age" => "30"}
+      )
+    end
+  end
+
+  context "with data-role attribute in headers" do
+    let(:html) do
+      <<-HTML
+        <table id="special">
+          <thead>
+            <tr>
+              <th><span data-role="header-text">Item</span></th>
+              <th>Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-table-target="row">
+              <td>Apple</td>
+              <td>5</td>
+            </tr>
+          </tbody>
+        </table>
+      HTML
+    end
+
+    it "extracts header text from data-role elements when th is empty" do
+      expect(page).to match_table(:special).with_rows(
+        {"Item" => "Apple", "Count" => "5"}
+      )
+    end
+  end
+
+  context "with accordion content rows" do
+    let(:html) do
+      <<-HTML
+        <table id="expandable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-table-target="row">
+              <td>David</td>
+              <td>View</td>
+            </tr>
+            <tr data-accordion-content>
+              <td colspan="2">
+                <div>Expanded content here</div>
+              </td>
+            </tr>
+            <tr data-table-target="row">
+              <td>Eve</td>
+              <td>Edit</td>
+            </tr>
+          </tbody>
+        </table>
+      HTML
+    end
+
+    it "excludes rows inside accordion content" do
+      expect(page).to match_table(:expandable).with_exact_rows(
+        {"Name" => "David", "Action" => "View"},
+        {"Name" => "Eve", "Action" => "Edit"}
+      )
+    end
+  end
+
+  context "with tbody.contents class" do
+    let(:html) do
+      <<-HTML
+        <table id="filtered">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody class="contents">
+            <tr data-table-target="row">
+              <td>Should be ignored</td>
+              <td>Contents class</td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr data-table-target="row">
+              <td>Visible</td>
+              <td>Normal tbody</td>
+            </tr>
+          </tbody>
+        </table>
+      HTML
+    end
+
+    it "only matches rows in tbody without 'contents' class" do
+      expect(page).to match_table(:filtered).with_exact_rows(
+        {"Type" => "Visible", "Value" => "Normal tbody"}
+      )
+    end
+  end
+
+  context "with string table identifier" do
+    let(:html) do
+      <<-HTML
+        <table>
+          <caption>My Table</caption>
+          <thead>
+            <tr>
+              <th>Column</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-table-target="row">
+              <td>Data</td>
+            </tr>
+          </tbody>
+        </table>
+      HTML
+    end
+
+    it "finds table by caption text (string identifier)" do
+      expect(page).to match_table("My Table").with_rows(
+        {"Column" => "Data"}
+      )
+    end
+  end
+
+  context "with rows that lack data-table-target attribute" do
+    let(:html) do
+      <<-HTML
+        <table id="targettest">
+          <thead>
+            <tr>
+              <th>Field</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Should not match</td>
+            </tr>
+            <tr data-table-target="row">
+              <td>Should match</td>
+            </tr>
+          </tbody>
+        </table>
+      HTML
+    end
+
+    it "only matches rows with data-table-target='row' attribute" do
+      expect(page).to match_table(:targettest).with_exact_rows(
+        {"Field" => "Should match"}
+      )
+    end
+  end
 end
