@@ -117,7 +117,7 @@ RSpec::Matchers.define :match_table do |table|
           text = element.first("[data-role]", visible: :all, minimum: 0)&.text(:all) || ""
         end
 
-        text
+        normalize_header_text(text)
       end
 
     @actual_rows = []
@@ -125,9 +125,12 @@ RSpec::Matchers.define :match_table do |table|
     tbody = table.find("tbody:not(.contents)")
     rows = tbody.all("tr[data-table-target='row']")
 
-    # Filter out rows that are inside accordion content tables
+    # Filter out rows that are inside accordion content of table rows
+    # Only reject rows that are inside a tr[data-accordion-content] that is within this specific table
     rows = rows.reject do |row|
-      row.matches_css?("[data-accordion-content] table tr")
+      row.ancestor("tr[data-accordion-content]", minimum: 0)
+    rescue Capybara::ElementNotFound
+      false
     end
 
     rows.each do |row|
@@ -140,6 +143,15 @@ RSpec::Matchers.define :match_table do |table|
     header_positions.each_with_object({}) do |(header, position), matched_row|
       matched_row[header] = actual_row[position]
     end
+  end
+
+  def normalize_header_text(text)
+    return text if text.nil? || text.empty?
+
+    text
+      .gsub(/arrow_drop_(up|down)/, "")
+      .gsub(/\s+/, " ")
+      .strip
   end
 
   def append_to_failures_array_notifier
