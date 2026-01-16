@@ -32,7 +32,7 @@ RSpec::Matchers.define :match_table do |table|
 
         header_positions =
           expected_headers.each_with_object({}) do |header, hash|
-            position = @actual_headers.find_index { |actual_header| actual_header.start_with?(header) }
+            position = @actual_headers.find_index { |actual_header| actual_header == header }
             unless position.nil?
               hash[header] = position
             end
@@ -113,17 +113,25 @@ RSpec::Matchers.define :match_table do |table|
     @actual_headers =
       table.find("thead").all("th", visible: :all).map do |element|
         text = element.text
-        if text.blank?
+        if text.nil? || text.empty?
           text = element.first("[data-role]", visible: :all, minimum: 0)&.text(:all) || ""
         end
 
-        text
+        normalize_header_text(text)
       end
 
     @actual_rows = []
 
-    rows = table.find("tbody:not(.contents)").all("tr[data-table-target='row']:not([data-accordion-content] table tr)").presence ||
-      table.find("tbody:not(.contents)").all("tr[data-table-target='row']")
+    tbody = table.find("tbody:not(.contents)")
+    rows = tbody.all("tr[data-table-target='row']")
+
+    # Filter out rows that are inside accordion content of table rows
+    # Only reject rows that are inside a tr[data-accordion-content] that is within this specific table
+    rows = rows.reject do |row|
+      row.ancestor("tr[data-accordion-content]", minimum: 0)
+    rescue Capybara::ElementNotFound
+      false
+    end
 
     rows.each do |row|
       cells = row.all("td")
@@ -135,6 +143,15 @@ RSpec::Matchers.define :match_table do |table|
     header_positions.each_with_object({}) do |(header, position), matched_row|
       matched_row[header] = actual_row[position]
     end
+  end
+
+  def normalize_header_text(text)
+    return text if text.nil? || text.empty?
+
+    text
+      .gsub(/arrow_drop_(up|down)/, "")
+      .gsub(/\s+/, " ")
+      .strip
   end
 
   def append_to_failures_array_notifier
