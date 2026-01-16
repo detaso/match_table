@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    match_table (1.2.0)
+    match_table (1.3.0)
       capybara (~> 3)
       rspec-expectations (~> 3)
 
